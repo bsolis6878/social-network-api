@@ -29,26 +29,29 @@ const thoughtController = {
 
     // post a thought
     createThought({ params, body }, res) {
-        User.findOneAndUpdate(
-            { _id: params.userId },
-            { $push: { thoughts: body } },
-            { new: true, runValidators: true }
-        )
+        Thought.create(body)
+            .then(({ _id }) => {
+                return User.findOneAndUpdate(
+                    { _id: params.userId },
+                    { $push: { thoughts: _id } },
+                    { new: true }
+                );
+            })
             .then(dbUserData => {
                 if (!dbUserData) {
                     res.status(404).json({ message: 'No user found with this id!' });
                     return;
                 }
-                res.json(dbPizzaData);
+                res.json(dbUserData);
             })
-            .catch(err => res.json(err));
+            .catch(err => res.json(err))
     },
 
     // update a thought
     updateThought({ params, body }, res) {
         Thought.findOneAndUpdate({ _id: params.thoughtId }, body, { new: true, runValidators: true })
             .then(dbThoughtData => {
-                if(!dbUserData) {
+                if(!dbThoughtData) {
                     res.status(404).json({ message: 'No thought found with this id!' });
                     return;
                 }
@@ -78,7 +81,7 @@ const thoughtController = {
             { new: true, runValidators: true }
         )
             .then(dbThoughtData => {
-                if (!dbUserData) {
+                if (!dbThoughtData) {
                     res.status(404).json({ message: 'No thought found with this id!' });
                     return;
                 }
@@ -91,7 +94,7 @@ const thoughtController = {
     deleteReaction({ params }, res) {
         Thought.findOneAndUpdate(
             { _id: params.thoughtId },
-            { $pull: { reactions: params.reactionId } },
+            { $pull: { reactions: { reactionId: params.reactionId} } },
             { new: true }
         )
             .then(dbThoughtData => res.json(dbThoughtData))
